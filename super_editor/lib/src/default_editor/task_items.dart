@@ -5,7 +5,8 @@ import 'package:super_editor/super_editor.dart';
 
 final _log = Logger(scope: 'super_note_editor.dart');
 
-Widget? doneTaskComponentBuilder(ComponentContext componentContext) {
+Widget? doneTaskComponentBuilder(
+    ComponentContext componentContext, EditContext editContext) {
   final taskItemNode = componentContext.documentNode;
   if (taskItemNode is! TaskItemNode) {
     return null;
@@ -14,13 +15,13 @@ Widget? doneTaskComponentBuilder(ComponentContext componentContext) {
   if (taskItemNode.taskType != TaskItemType.done) {
     return null;
   }
-
   final textSelection =
       componentContext.nodeSelection?.nodeSelection as TextSelection?;
   final showCaret = componentContext.showCaret &&
       (componentContext.nodeSelection?.isExtent ?? false);
 
   return DoneTaskItemComponent(
+    editContext: editContext,
     textKey: componentContext.componentKey,
     text: taskItemNode.text,
     styleBuilder: componentContext.extensions[textStylesExtensionKey],
@@ -124,6 +125,7 @@ class DoneTaskItemComponent extends StatelessWidget {
     this.showCaret = false,
     this.caretColor = Colors.black,
     this.showDebugPaint = false,
+    required this.editContext,
   }) : super(key: key);
 
   final GlobalKey textKey;
@@ -136,6 +138,7 @@ class DoneTaskItemComponent extends StatelessWidget {
   final bool showCaret;
   final Color caretColor;
   final bool showDebugPaint;
+  final EditContext editContext;
 
   @override
   Widget build(BuildContext context) {
@@ -154,7 +157,7 @@ class DoneTaskItemComponent extends StatelessWidget {
           ),
           child: SizedBox(
             height: firstLineHeight,
-            child: dotBuilder(context, this),
+            child: dotBuilder(context, this, editContext),
           ),
         ),
         Expanded(
@@ -175,14 +178,16 @@ class DoneTaskItemComponent extends StatelessWidget {
 }
 
 typedef DoneTaskItemDotBuilder = Widget Function(
-    BuildContext, DoneTaskItemComponent);
+    BuildContext, DoneTaskItemComponent, EditContext editContext);
 
-Widget _defaultDoneTaskItemDotBuilder(
-    BuildContext context, DoneTaskItemComponent component) {
+Widget _defaultDoneTaskItemDotBuilder(BuildContext context,
+    DoneTaskItemComponent component, EditContext editContext) {
   return Align(
       alignment: Alignment.centerRight,
       child: GestureDetector(
-        onTap: () => print("uncheck"),
+        onTap: () => ChangeTaskItemTypeCommand(
+            newType: TaskItemType.open,
+            nodeId: editContext.composer.selection!.extent.nodeId),
         child: const Icon(
           Icons.check_box_outlined,
           size: 12,
@@ -445,14 +450,14 @@ ExecutionInstruction splitTaskItemWhenEnterPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final didSplitTaskItem =
-      editContext.commonOps.insertBlockLevelNewlineTask(editContext);
+  final didSplitTaskItem = editContext.commonOps.insertBlockLevelNewline();
   return didSplitTaskItem
       ? ExecutionInstruction.haltExecution
       : ExecutionInstruction.continueExecution;
 }
 
-Widget? doneTaskItemBuilder(ComponentContext componentContext) {
+Widget? doneTaskItemBuilder(
+    ComponentContext componentContext, EditContext editContext) {
   final taskItemNode = componentContext.documentNode;
   if (taskItemNode is! TaskItemNode) {
     return null;
@@ -468,6 +473,7 @@ Widget? doneTaskItemBuilder(ComponentContext componentContext) {
       (componentContext.nodeSelection?.isExtent ?? false);
 
   return DoneTaskItemComponent(
+    editContext: editContext,
     textKey: componentContext.componentKey,
     text: taskItemNode.text,
     styleBuilder: componentContext.extensions[textStylesExtensionKey],
@@ -518,85 +524,4 @@ Widget? openTaskItemBuilder(ComponentContext componentContext) {
             as SelectionStyle)
         .textCaretColor,
   );
-}
-
-extension TaskAddition on CommonEditorOperations {
-  bool insertBlockLevelNewlineTask(EditContext editContext) {
-    if (editContext.composer.selection == null) {
-      return false;
-    }
-
-    // Ensure that the entire selection sits within the same node.
-    final baseNode = editContext.editor.document
-        .getNodeById(editContext.composer.selection!.base.nodeId)!;
-    final extentNode = editContext.editor.document
-        .getNodeById(editContext.composer.selection!.extent.nodeId)!;
-    if (baseNode.id != extentNode.id) {
-      return false;
-    }
-
-    if (!editContext.composer.selection!.isCollapsed) {
-      // The selection is not collapsed. Delete the selected content first,
-      // then continue the process.
-      deleteSelection();
-    }
-
-    final newNodeId = DocumentEditor.createNodeId();
-
-    if (extentNode is TaskItemNode) {
-      if (extentNode.text.text.isEmpty) {
-        // The list item is empty. Convert it to a paragraph.
-        return convertToParagraph();
-      }
-
-      // Split the list item into two.
-      editContext.editor.executeCommand(
-        SplitTaskItemCommand(
-          nodeId: extentNode.id,
-          splitPosition: editContext.composer.selection!.extent.nodePosition
-              as TextNodePosition,
-          newNodeId: newNodeId,
-        ),
-      );
-    } else if (extentNode is ParagraphNode) {
-      // Split the paragraph into two. This includes headers, blockquotes, and
-      // any other block-level paragraph.
-      final currentExtentPosition = editContext
-          .composer.selection!.extent.nodePosition as TextNodePosition;
-      final endOfParagraph = extentNode.endPosition;
-
-      editContext.editor.executeCommand(
-        SplitParagraphCommand(
-          nodeId: extentNode.id,
-          splitPosition: currentExtentPosition,
-          newNodeId: newNodeId,
-          replicateExistingMetdata:
-              currentExtentPosition.offset != endOfParagraph.offset,
-        ),
-      );
-    } else {
-      // The selection extent might be an image, HR, etc. Insert a new
-      // node after it.
-      editContext.editor
-          .executeCommand(EditorCommandFunction((doc, transaction) {
-        transaction.insertNodeAfter(
-          previousNode: extentNode,
-          newNode: ParagraphNode(
-            id: newNodeId,
-            text: AttributedText(text: ''),
-          ),
-        );
-      }));
-    }
-
-    // Place the caret at the beginning of the second node.
-    editContext.composer.selection = DocumentSelection.collapsed(
-      position: DocumentPosition(
-        nodeId: newNodeId,
-        nodePosition: TextNodePosition(offset: 0),
-      ),
-    );
-
-    return true;
-  }
 }
