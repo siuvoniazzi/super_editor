@@ -4,7 +4,8 @@ import 'platform_detector.dart';
 
 extension PrimaryShortcutKey on RawKeyEvent {
   bool get isPrimaryShortcutKeyPressed =>
-      (Platform.instance.isMac && isMetaPressed) || (!Platform.instance.isMac && isControlPressed);
+      (Platform.instance.isMac && isMetaPressed) ||
+      (!Platform.instance.isMac && isControlPressed);
 }
 
 /// On web, Flutter reports control character labels as
@@ -13,7 +14,8 @@ extension PrimaryShortcutKey on RawKeyEvent {
 /// identifies the keys that we should ignore for the
 /// purpose of text/character entry.
 const webBugBlacklistCharacters = {
-  'Dead',
+  'AltGraph'
+      'Dead',
   'Shift',
   'Alt',
   'Escape',
