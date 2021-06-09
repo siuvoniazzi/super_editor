@@ -23,6 +23,7 @@ export 'src/default_editor/horizontal_rule.dart';
 export 'src/default_editor/image.dart';
 export 'src/default_editor/layout.dart';
 export 'src/default_editor/list_items.dart';
+export 'src/default_editor/task_items.dart';
 export 'src/default_editor/multi_node_editing.dart';
 export 'src/default_editor/paragraph.dart';
 export 'src/default_editor/styles.dart';
