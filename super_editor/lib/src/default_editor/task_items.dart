@@ -183,7 +183,10 @@ Widget _defaultDoneTaskItemDotBuilder(
       alignment: Alignment.centerRight,
       child: GestureDetector(
         onTap: () => print("uncheck"),
-        child: const Icon(Icons.check_box_outlined),
+        child: const Icon(
+          Icons.check_box_outlined,
+          size: 12,
+        ),
       ));
 }
 
@@ -258,7 +261,10 @@ Widget _defaultOpenTaskItemDotBuilder(
     alignment: Alignment.centerRight,
     child: GestureDetector(
         onTap: () => print("tap"),
-        child: const Icon(Icons.check_box_outline_blank)),
+        child: const Icon(
+          Icons.check_box_outline_blank,
+          size: 12,
+        )),
   );
 }
 
