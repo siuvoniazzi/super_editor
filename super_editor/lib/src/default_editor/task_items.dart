@@ -180,17 +180,11 @@ typedef DoneTaskItemDotBuilder = Widget Function(
 Widget _defaultDoneTaskItemDotBuilder(
     BuildContext context, DoneTaskItemComponent component) {
   return Align(
-    alignment: Alignment.centerRight,
-    child: Container(
-      width: 4,
-      height: 4,
-      margin: const EdgeInsets.only(right: 10),
-      decoration: BoxDecoration(
-        shape: BoxShape.rectangle,
-        color: component.styleBuilder({}).color,
-      ),
-    ),
-  );
+      alignment: Alignment.centerRight,
+      child: GestureDetector(
+        onTap: () => print("uncheck"),
+        child: const Icon(Icons.check_box_outlined),
+      ));
 }
 
 class OpenTaskItemComponent extends StatelessWidget {
@@ -263,17 +257,8 @@ Widget _defaultOpenTaskItemDotBuilder(
   return Align(
     alignment: Alignment.centerRight,
     child: GestureDetector(
-      onTap: () => print("tap"),
-      child: Container(
-        width: 4,
-        height: 4,
-        margin: const EdgeInsets.only(right: 10),
-        decoration: BoxDecoration(
-            shape: BoxShape.rectangle,
-            color: Colors.red //component.styleBuilder({}).color,
-            ),
-      ),
-    ),
+        onTap: () => print("tap"),
+        child: const Icon(Icons.check_box_outline_blank)),
   );
 }
 
