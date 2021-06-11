@@ -35,7 +35,8 @@ Widget? doneTaskComponentBuilder(ComponentContext componentContext) {
   );
 }
 
-Widget? openTaskComponentBuilder(ComponentContext componentContext) {
+Widget? openTaskComponentBuilder(
+    ComponentContext componentContext, EditContext editContext) {
   final taskItemNode = componentContext.documentNode;
   if (taskItemNode is! TaskItemNode) {
     return null;
@@ -51,6 +52,7 @@ Widget? openTaskComponentBuilder(ComponentContext componentContext) {
       (componentContext.nodeSelection?.isExtent ?? false);
 
   return OpenTaskItemComponent(
+    editContext: editContext,
     textKey: componentContext.componentKey,
     text: taskItemNode.text,
     styleBuilder: componentContext.extensions[textStylesExtensionKey],
@@ -202,12 +204,14 @@ class OpenTaskItemComponent extends StatelessWidget {
     this.showCaret = false,
     this.caretColor = Colors.black,
     this.showDebugPaint = false,
+    required this.editContext,
   }) : super(key: key);
 
   final GlobalKey textKey;
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
   final OpenTaskItemDotBuilder dotBuilder;
+  final EditContext editContext;
 
   final TextSelection? textSelection;
   final Color selectionColor;
@@ -232,7 +236,7 @@ class OpenTaskItemComponent extends StatelessWidget {
           ),
           child: SizedBox(
             height: firstLineHeight,
-            child: dotBuilder(context, this),
+            child: dotBuilder(context, this, editContext),
           ),
         ),
         Expanded(
@@ -253,14 +257,16 @@ class OpenTaskItemComponent extends StatelessWidget {
 }
 
 typedef OpenTaskItemDotBuilder = Widget Function(
-    BuildContext, OpenTaskItemComponent);
+    BuildContext, OpenTaskItemComponent, EditContext);
 
-Widget _defaultOpenTaskItemDotBuilder(
-    BuildContext context, OpenTaskItemComponent component) {
+Widget _defaultOpenTaskItemDotBuilder(BuildContext context,
+    OpenTaskItemComponent component, EditContext editContext) {
   return Align(
     alignment: Alignment.centerRight,
     child: GestureDetector(
-        onTap: () => print("tap"),
+        onTap: () => editContext.commonOps.checkTaskItem(
+              TaskItemType.done,
+            ),
         child: const Icon(
           Icons.check_box_outline_blank,
           size: 12,
@@ -482,7 +488,8 @@ Widget? doneTaskItemBuilder(ComponentContext componentContext) {
   );
 }
 
-Widget? openTaskItemBuilder(ComponentContext componentContext) {
+Widget? openTaskItemBuilder(
+    ComponentContext componentContext, EditContext editContext) {
   final taskItemNode = componentContext.documentNode;
   if (taskItemNode is! TaskItemNode) {
     return null;
@@ -506,6 +513,7 @@ Widget? openTaskItemBuilder(ComponentContext componentContext) {
       (componentContext.nodeSelection?.isExtent ?? false);
 
   return OpenTaskItemComponent(
+    editContext: editContext,
     textKey: componentContext.componentKey,
     text: taskItemNode.text,
     styleBuilder: componentContext.extensions[textStylesExtensionKey],

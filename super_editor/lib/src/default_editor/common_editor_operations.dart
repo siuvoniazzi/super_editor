@@ -2050,6 +2050,41 @@ class CommonEditorOperations {
     return true;
   }
 
+  bool checkTaskItem(TaskItemType type) {
+    if (composer.selection == null) {
+      return false;
+    }
+    if (composer.selection!.base.nodeId != composer.selection!.extent.nodeId) {
+      return false;
+    }
+
+    final nodeId = composer.selection!.base.nodeId;
+    final node = editor.document.getNodeById(nodeId);
+    if (node is! TextNode) {
+      return false;
+    }
+
+    final nodeIndex = editor.document.getNodeIndex(node);
+    final newNode = TaskItemNode(id: nodeId, itemType: type, text: node.text);
+
+    editor.executeCommand(
+      EditorCommandFunction((document, transaction) {
+        transaction
+          ..deleteNodeAt(nodeIndex)
+          ..insertNodeAt(nodeIndex, newNode);
+
+        composer.selection = DocumentSelection.collapsed(
+          position: DocumentPosition(
+            nodeId: nodeId,
+            nodePosition: newNode.endPosition,
+          ),
+        );
+      }),
+    );
+
+    return true;
+  }
+
   /// Converts the [TextNode] with the current [DocumentComposer] selection
   /// extent to a [Paragraph] with a blockquote block type, or does nothing
   /// if the current node is not a [TextNode], or if the current selection
