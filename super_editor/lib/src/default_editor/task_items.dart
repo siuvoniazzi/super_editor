@@ -5,7 +5,8 @@ import 'package:super_editor/super_editor.dart';
 
 final _log = Logger(scope: 'super_note_editor.dart');
 
-Widget? doneTaskComponentBuilder(ComponentContext componentContext) {
+Widget? doneTaskComponentBuilder(
+    ComponentContext componentContext, EditContext editContext) {
   final taskItemNode = componentContext.documentNode;
   if (taskItemNode is! TaskItemNode) {
     return null;
@@ -14,13 +15,13 @@ Widget? doneTaskComponentBuilder(ComponentContext componentContext) {
   if (taskItemNode.taskType != TaskItemType.done) {
     return null;
   }
-
   final textSelection =
       componentContext.nodeSelection?.nodeSelection as TextSelection?;
   final showCaret = componentContext.showCaret &&
       (componentContext.nodeSelection?.isExtent ?? false);
 
   return DoneTaskItemComponent(
+    editContext: editContext,
     textKey: componentContext.componentKey,
     text: taskItemNode.text,
     styleBuilder: componentContext.extensions[textStylesExtensionKey],
@@ -126,6 +127,7 @@ class DoneTaskItemComponent extends StatelessWidget {
     this.showCaret = false,
     this.caretColor = Colors.black,
     this.showDebugPaint = false,
+    required this.editContext,
   }) : super(key: key);
 
   final GlobalKey textKey;
@@ -138,6 +140,7 @@ class DoneTaskItemComponent extends StatelessWidget {
   final bool showCaret;
   final Color caretColor;
   final bool showDebugPaint;
+  final EditContext editContext;
 
   @override
   Widget build(BuildContext context) {
@@ -156,7 +159,7 @@ class DoneTaskItemComponent extends StatelessWidget {
           ),
           child: SizedBox(
             height: firstLineHeight,
-            child: dotBuilder(context, this),
+            child: dotBuilder(context, this, editContext),
           ),
         ),
         Expanded(
@@ -177,14 +180,16 @@ class DoneTaskItemComponent extends StatelessWidget {
 }
 
 typedef DoneTaskItemDotBuilder = Widget Function(
-    BuildContext, DoneTaskItemComponent);
+    BuildContext, DoneTaskItemComponent, EditContext editContext);
 
-Widget _defaultDoneTaskItemDotBuilder(
-    BuildContext context, DoneTaskItemComponent component) {
+Widget _defaultDoneTaskItemDotBuilder(BuildContext context,
+    DoneTaskItemComponent component, EditContext editContext) {
   return Align(
       alignment: Alignment.centerRight,
       child: GestureDetector(
-        onTap: () => print("uncheck"),
+        onTap: () => ChangeTaskItemTypeCommand(
+            newType: TaskItemType.open,
+            nodeId: editContext.composer.selection!.extent.nodeId),
         child: const Icon(
           Icons.check_box_outlined,
           size: 12,
@@ -471,14 +476,15 @@ ExecutionInstruction convertTaskTypeWhenCtrlDPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final didSplitTaskItem =
+  final didCheckTaskItem =
       editContext.commonOps.checkTaskItem(TaskItemType.done);
-  return didSplitTaskItem
+  return didCheckTaskItem
       ? ExecutionInstruction.haltExecution
       : ExecutionInstruction.continueExecution;
 }
 
-Widget? doneTaskItemBuilder(ComponentContext componentContext) {
+Widget? doneTaskItemBuilder(
+    ComponentContext componentContext, EditContext editContext) {
   final taskItemNode = componentContext.documentNode;
   if (taskItemNode is! TaskItemNode) {
     return null;
@@ -494,6 +500,7 @@ Widget? doneTaskItemBuilder(ComponentContext componentContext) {
       (componentContext.nodeSelection?.isExtent ?? false);
 
   return DoneTaskItemComponent(
+    editContext: editContext,
     textKey: componentContext.componentKey,
     text: taskItemNode.text,
     styleBuilder: componentContext.extensions[textStylesExtensionKey],
