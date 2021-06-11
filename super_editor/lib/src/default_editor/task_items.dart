@@ -5,8 +5,7 @@ import 'package:super_editor/super_editor.dart';
 
 final _log = Logger(scope: 'super_note_editor.dart');
 
-Widget? doneTaskComponentBuilder(
-    ComponentContext componentContext, EditContext editContext) {
+Widget? doneTaskComponentBuilder(ComponentContext componentContext) {
   final taskItemNode = componentContext.documentNode;
   if (taskItemNode is! TaskItemNode) {
     return null;
@@ -21,7 +20,6 @@ Widget? doneTaskComponentBuilder(
       (componentContext.nodeSelection?.isExtent ?? false);
 
   return DoneTaskItemComponent(
-    editContext: editContext,
     textKey: componentContext.componentKey,
     text: taskItemNode.text,
     styleBuilder: componentContext.extensions[textStylesExtensionKey],
@@ -36,8 +34,7 @@ Widget? doneTaskComponentBuilder(
   );
 }
 
-Widget? openTaskComponentBuilder(
-    ComponentContext componentContext, EditContext editContext) {
+Widget? openTaskComponentBuilder(ComponentContext componentContext) {
   final taskItemNode = componentContext.documentNode;
   if (taskItemNode is! TaskItemNode) {
     return null;
@@ -53,7 +50,6 @@ Widget? openTaskComponentBuilder(
       (componentContext.nodeSelection?.isExtent ?? false);
 
   return OpenTaskItemComponent(
-    editContext: editContext,
     textKey: componentContext.componentKey,
     text: taskItemNode.text,
     styleBuilder: componentContext.extensions[textStylesExtensionKey],
@@ -127,7 +123,6 @@ class DoneTaskItemComponent extends StatelessWidget {
     this.showCaret = false,
     this.caretColor = Colors.black,
     this.showDebugPaint = false,
-    required this.editContext,
   }) : super(key: key);
 
   final GlobalKey textKey;
@@ -140,7 +135,6 @@ class DoneTaskItemComponent extends StatelessWidget {
   final bool showCaret;
   final Color caretColor;
   final bool showDebugPaint;
-  final EditContext editContext;
 
   @override
   Widget build(BuildContext context) {
@@ -159,7 +153,7 @@ class DoneTaskItemComponent extends StatelessWidget {
           ),
           child: SizedBox(
             height: firstLineHeight,
-            child: dotBuilder(context, this, editContext),
+            child: dotBuilder(context, this),
           ),
         ),
         Expanded(
@@ -180,20 +174,15 @@ class DoneTaskItemComponent extends StatelessWidget {
 }
 
 typedef DoneTaskItemDotBuilder = Widget Function(
-    BuildContext, DoneTaskItemComponent, EditContext editContext);
+    BuildContext, DoneTaskItemComponent);
 
-Widget _defaultDoneTaskItemDotBuilder(BuildContext context,
-    DoneTaskItemComponent component, EditContext editContext) {
+Widget _defaultDoneTaskItemDotBuilder(
+    BuildContext context, DoneTaskItemComponent component) {
   return Align(
       alignment: Alignment.centerRight,
-      child: GestureDetector(
-        onTap: () => ChangeTaskItemTypeCommand(
-            newType: TaskItemType.open,
-            nodeId: editContext.composer.selection!.extent.nodeId),
-        child: const Icon(
-          Icons.check_box_outlined,
-          size: 12,
-        ),
+      child: const Icon(
+        Icons.check_box_outlined,
+        size: 12,
       ));
 }
 
@@ -209,14 +198,12 @@ class OpenTaskItemComponent extends StatelessWidget {
     this.showCaret = false,
     this.caretColor = Colors.black,
     this.showDebugPaint = false,
-    required this.editContext,
   }) : super(key: key);
 
   final GlobalKey textKey;
   final AttributedText text;
   final AttributionStyleBuilder styleBuilder;
   final OpenTaskItemDotBuilder dotBuilder;
-  final EditContext editContext;
 
   final TextSelection? textSelection;
   final Color selectionColor;
@@ -241,7 +228,7 @@ class OpenTaskItemComponent extends StatelessWidget {
           ),
           child: SizedBox(
             height: firstLineHeight,
-            child: dotBuilder(context, this, editContext),
+            child: dotBuilder(context, this),
           ),
         ),
         Expanded(
@@ -262,20 +249,16 @@ class OpenTaskItemComponent extends StatelessWidget {
 }
 
 typedef OpenTaskItemDotBuilder = Widget Function(
-    BuildContext, OpenTaskItemComponent, EditContext);
+    BuildContext, OpenTaskItemComponent);
 
-Widget _defaultOpenTaskItemDotBuilder(BuildContext context,
-    OpenTaskItemComponent component, EditContext editContext) {
+Widget _defaultOpenTaskItemDotBuilder(
+    BuildContext context, OpenTaskItemComponent component) {
   return Align(
     alignment: Alignment.centerRight,
-    child: GestureDetector(
-        onTap: () => editContext.commonOps.checkTaskItem(
-              TaskItemType.done,
-            ),
-        child: const Icon(
-          Icons.check_box_outline_blank,
-          size: 12,
-        )),
+    child: const Icon(
+      Icons.check_box_outline_blank,
+      size: 12,
+    ),
   );
 }
 
@@ -483,8 +466,7 @@ ExecutionInstruction convertTaskTypeWhenCtrlDPressed({
       : ExecutionInstruction.continueExecution;
 }
 
-Widget? doneTaskItemBuilder(
-    ComponentContext componentContext, EditContext editContext) {
+Widget? doneTaskItemBuilder(ComponentContext componentContext) {
   final taskItemNode = componentContext.documentNode;
   if (taskItemNode is! TaskItemNode) {
     return null;
@@ -500,7 +482,6 @@ Widget? doneTaskItemBuilder(
       (componentContext.nodeSelection?.isExtent ?? false);
 
   return DoneTaskItemComponent(
-    editContext: editContext,
     textKey: componentContext.componentKey,
     text: taskItemNode.text,
     styleBuilder: componentContext.extensions[textStylesExtensionKey],
@@ -515,8 +496,7 @@ Widget? doneTaskItemBuilder(
   );
 }
 
-Widget? openTaskItemBuilder(
-    ComponentContext componentContext, EditContext editContext) {
+Widget? openTaskItemBuilder(ComponentContext componentContext) {
   final taskItemNode = componentContext.documentNode;
   if (taskItemNode is! TaskItemNode) {
     return null;
@@ -540,7 +520,6 @@ Widget? openTaskItemBuilder(
       (componentContext.nodeSelection?.isExtent ?? false);
 
   return OpenTaskItemComponent(
-    editContext: editContext,
     textKey: componentContext.componentKey,
     text: taskItemNode.text,
     styleBuilder: componentContext.extensions[textStylesExtensionKey],
