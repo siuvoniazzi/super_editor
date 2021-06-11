@@ -440,7 +440,6 @@ ExecutionInstruction splitTaskItemWhenEnterPressed({
   required EditContext editContext,
   required RawKeyEvent keyEvent,
 }) {
-  print("here");
   if (keyEvent.logicalKey != LogicalKeyboardKey.enter) {
     return ExecutionInstruction.continueExecution;
   }
@@ -451,8 +450,29 @@ ExecutionInstruction splitTaskItemWhenEnterPressed({
     return ExecutionInstruction.continueExecution;
   }
 
+  final didSplitTaskItem = editContext.commonOps.insertBlockLevelNewline();
+  return didSplitTaskItem
+      ? ExecutionInstruction.haltExecution
+      : ExecutionInstruction.continueExecution;
+}
+
+ExecutionInstruction convertTaskTypeWhenCtrlDPressed({
+  required EditContext editContext,
+  required RawKeyEvent keyEvent,
+}) {
+  if (!keyEvent.isControlPressed &&
+      keyEvent.logicalKey != LogicalKeyboardKey.keyD) {
+    return ExecutionInstruction.continueExecution;
+  }
+
+  final node = editContext.editor.document
+      .getNodeById(editContext.composer.selection!.extent.nodeId);
+  if (node is! TaskItemNode) {
+    return ExecutionInstruction.continueExecution;
+  }
+
   final didSplitTaskItem =
-      editContext.commonOps.insertBlockLevelNewlineTask(editContext);
+      editContext.commonOps.checkTaskItem(TaskItemType.done);
   return didSplitTaskItem
       ? ExecutionInstruction.haltExecution
       : ExecutionInstruction.continueExecution;
@@ -526,85 +546,4 @@ Widget? openTaskItemBuilder(
             as SelectionStyle)
         .textCaretColor,
   );
-}
-
-extension TaskAddition on CommonEditorOperations {
-  bool insertBlockLevelNewlineTask(EditContext editContext) {
-    if (editContext.composer.selection == null) {
-      return false;
-    }
-
-    // Ensure that the entire selection sits within the same node.
-    final baseNode = editContext.editor.document
-        .getNodeById(editContext.composer.selection!.base.nodeId)!;
-    final extentNode = editContext.editor.document
-        .getNodeById(editContext.composer.selection!.extent.nodeId)!;
-    if (baseNode.id != extentNode.id) {
-      return false;
-    }
-
-    if (!editContext.composer.selection!.isCollapsed) {
-      // The selection is not collapsed. Delete the selected content first,
-      // then continue the process.
-      deleteSelection();
-    }
-
-    final newNodeId = DocumentEditor.createNodeId();
-
-    if (extentNode is TaskItemNode) {
-      if (extentNode.text.text.isEmpty) {
-        // The list item is empty. Convert it to a paragraph.
-        return convertToParagraph();
-      }
-
-      // Split the list item into two.
-      editContext.editor.executeCommand(
-        SplitTaskItemCommand(
-          nodeId: extentNode.id,
-          splitPosition: editContext.composer.selection!.extent.nodePosition
-              as TextNodePosition,
-          newNodeId: newNodeId,
-        ),
-      );
-    } else if (extentNode is ParagraphNode) {
-      // Split the paragraph into two. This includes headers, blockquotes, and
-      // any other block-level paragraph.
-      final currentExtentPosition = editContext
-          .composer.selection!.extent.nodePosition as TextNodePosition;
-      final endOfParagraph = extentNode.endPosition;
-
-      editContext.editor.executeCommand(
-        SplitParagraphCommand(
-          nodeId: extentNode.id,
-          splitPosition: currentExtentPosition,
-          newNodeId: newNodeId,
-          replicateExistingMetdata:
-              currentExtentPosition.offset != endOfParagraph.offset,
-        ),
-      );
-    } else {
-      // The selection extent might be an image, HR, etc. Insert a new
-      // node after it.
-      editContext.editor
-          .executeCommand(EditorCommandFunction((doc, transaction) {
-        transaction.insertNodeAfter(
-          previousNode: extentNode,
-          newNode: ParagraphNode(
-            id: newNodeId,
-            text: AttributedText(text: ''),
-          ),
-        );
-      }));
-    }
-
-    // Place the caret at the beginning of the second node.
-    editContext.composer.selection = DocumentSelection.collapsed(
-      position: DocumentPosition(
-        nodeId: newNodeId,
-        nodePosition: TextNodePosition(offset: 0),
-      ),
-    );
-
-    return true;
-  }
 }
