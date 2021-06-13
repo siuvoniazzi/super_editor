@@ -5,7 +5,8 @@ import 'package:super_editor/super_editor.dart';
 
 final _log = Logger(scope: 'super_note_editor.dart');
 
-Widget? doneTaskComponentBuilder(ComponentContext componentContext) {
+Widget? doneTaskComponentBuilder(
+    ComponentContext componentContext, EditContext editContext) {
   final taskItemNode = componentContext.documentNode;
   if (taskItemNode is! TaskItemNode) {
     return null;
@@ -20,6 +21,7 @@ Widget? doneTaskComponentBuilder(ComponentContext componentContext) {
       (componentContext.nodeSelection?.isExtent ?? false);
 
   return DoneTaskItemComponent(
+    editContext: editContext,
     textKey: componentContext.componentKey,
     text: taskItemNode.text,
     styleBuilder: componentContext.extensions[textStylesExtensionKey],
@@ -123,6 +125,7 @@ class DoneTaskItemComponent extends StatelessWidget {
     this.showCaret = false,
     this.caretColor = Colors.black,
     this.showDebugPaint = false,
+    required this.editContext,
   }) : super(key: key);
 
   final GlobalKey textKey;
@@ -135,6 +138,7 @@ class DoneTaskItemComponent extends StatelessWidget {
   final bool showCaret;
   final Color caretColor;
   final bool showDebugPaint;
+  final EditContext editContext;
 
   @override
   Widget build(BuildContext context) {
@@ -151,9 +155,12 @@ class DoneTaskItemComponent extends StatelessWidget {
                 width: 1,
                 color: showDebugPaint ? Colors.grey : Colors.transparent),
           ),
-          child: SizedBox(
-            height: firstLineHeight,
-            child: dotBuilder(context, this),
+          child: GestureDetector(
+            onTap: () => editContext.commonOps.checkTaskItem(TaskItemType.open),
+            child: SizedBox(
+              height: firstLineHeight,
+              child: dotBuilder(context, this),
+            ),
           ),
         ),
         Expanded(
@@ -466,7 +473,8 @@ ExecutionInstruction convertTaskTypeWhenCtrlDPressed({
       : ExecutionInstruction.continueExecution;
 }
 
-Widget? doneTaskItemBuilder(ComponentContext componentContext) {
+Widget? doneTaskItemBuilder(
+    ComponentContext componentContext, EditContext editContext) {
   final taskItemNode = componentContext.documentNode;
   if (taskItemNode is! TaskItemNode) {
     return null;
@@ -482,6 +490,7 @@ Widget? doneTaskItemBuilder(ComponentContext componentContext) {
       (componentContext.nodeSelection?.isExtent ?? false);
 
   return DoneTaskItemComponent(
+    editContext: editContext,
     textKey: componentContext.componentKey,
     text: taskItemNode.text,
     styleBuilder: componentContext.extensions[textStylesExtensionKey],
