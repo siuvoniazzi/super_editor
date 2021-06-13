@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
@@ -441,9 +442,14 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout>
       children: [
         for (final docComponent in docComponents) ...[
           docComponent is DoneTaskItemComponent
-              ? GestureDetector(
-                  child: docComponent,
-                  onTap: () => print("taptap"),
+              ? Stack(
+                  children: [
+                    GestureDetector(
+                        onTap: () => print("test"),
+                        child: Container(
+                            width: 10, height: 10, color: Colors.red)),
+                    docComponent
+                  ],
                 )
               : docComponent,
           SizedBox(height: widget.componentVerticalSpacing),

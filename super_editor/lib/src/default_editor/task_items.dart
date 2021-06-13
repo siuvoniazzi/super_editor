@@ -180,7 +180,7 @@ Widget _defaultDoneTaskItemDotBuilder(
     BuildContext context, DoneTaskItemComponent component) {
   return Align(
       alignment: Alignment.centerRight,
-      child: const Icon(
+      child: Icon(
         Icons.check_box_outlined,
         size: 12,
       ));
