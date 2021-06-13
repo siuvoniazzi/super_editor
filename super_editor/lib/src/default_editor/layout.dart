@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/task_items.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 final _log = Logger(scope: 'DocumentLayout');
@@ -66,7 +67,8 @@ class DefaultDocumentLayout extends StatefulWidget {
   _DefaultDocumentLayoutState createState() => _DefaultDocumentLayoutState();
 }
 
-class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implements DocumentLayout {
+class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout>
+    implements DocumentLayout {
   final Map<String, GlobalKey> _nodeIdsToComponentKeys = {};
 
   // Keys are cached in top-to-bottom order so that we can visually
@@ -76,7 +78,8 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
 
   @override
   DocumentPosition? getDocumentPositionAtOffset(Offset documentOffset) {
-    _log.log('getDocumentPositionAtOffset', 'Getting document position at exact offset: $documentOffset');
+    _log.log('getDocumentPositionAtOffset',
+        'Getting document position at exact offset: $documentOffset');
 
     final componentKey = _findComponentAtOffset(documentOffset);
     if (componentKey == null || componentKey.currentContext == null) {
@@ -84,8 +87,10 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     }
 
     final component = componentKey.currentState as DocumentComponent;
-    final componentBox = componentKey.currentContext!.findRenderObject() as RenderBox;
-    _log.log('getDocumentPositionAtOffset', ' - found node at position: $component');
+    final componentBox =
+        componentKey.currentContext!.findRenderObject() as RenderBox;
+    _log.log(
+        'getDocumentPositionAtOffset', ' - found node at position: $component');
     final componentOffset = _componentOffset(componentBox, documentOffset);
     final componentPosition = component.getPositionAtOffset(componentOffset);
 
@@ -94,15 +99,19 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     }
 
     final selectionAtOffset = DocumentPosition(
-      nodeId: _nodeIdsToComponentKeys.entries.firstWhere((element) => element.value == componentKey).key,
+      nodeId: _nodeIdsToComponentKeys.entries
+          .firstWhere((element) => element.value == componentKey)
+          .key,
       nodePosition: componentPosition,
     );
-    _log.log('getDocumentPositionAtOffset', ' - selection at offset: $selectionAtOffset');
+    _log.log('getDocumentPositionAtOffset',
+        ' - selection at offset: $selectionAtOffset');
     return selectionAtOffset;
   }
 
   @override
-  DocumentPosition? getDocumentPositionNearestToOffset(Offset rawDocumentOffset) {
+  DocumentPosition? getDocumentPositionNearestToOffset(
+      Offset rawDocumentOffset) {
     // Constrain the incoming offset to sit within the width
     // of this document layout.
     final docBox = context.findRenderObject() as RenderBox;
@@ -114,7 +123,8 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       rawDocumentOffset.dx.clamp(1.0, docBox.size.width - 1),
       rawDocumentOffset.dy,
     );
-    _log.log('getDocumentPositionNearestToOffset', 'Getting document position at offset: $documentOffset');
+    _log.log('getDocumentPositionNearestToOffset',
+        'Getting document position at offset: $documentOffset');
 
     return getDocumentPositionAtOffset(documentOffset);
   }
@@ -123,13 +133,15 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
   Rect? getRectForPosition(DocumentPosition position) {
     final component = getComponentByNodeId(position.nodeId);
     if (component == null) {
-      _log.log('getRectForPosition', 'Could not find any component for node position: $position');
+      _log.log('getRectForPosition',
+          'Could not find any component for node position: $position');
       return null;
     }
     final componentRect = component.getRectForPosition(position.nodePosition);
 
     final componentBox = component.context.findRenderObject() as RenderBox;
-    final docOffset = componentBox.localToGlobal(Offset.zero, ancestor: context.findRenderObject());
+    final docOffset = componentBox.localToGlobal(Offset.zero,
+        ancestor: context.findRenderObject());
 
     return componentRect.translate(docOffset.dx, docOffset.dy);
   }
@@ -151,14 +163,19 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     if (base.nodeId == extent.nodeId) {
       // Selection within a single node.
       topComponent = extentComponent;
-      final componentBoundingBox = extentComponent.getRectForSelection(base.nodePosition, extent.nodePosition);
+      final componentBoundingBox = extentComponent.getRectForSelection(
+          base.nodePosition, extent.nodePosition);
       componentBoundingBoxes.add(componentBoundingBox);
     } else {
       // Selection across nodes.
       final selectedNodes = widget.document.getNodesInside(base, extent);
       topComponent = getComponentByNodeId(selectedNodes.first.id)!;
-      final startPosition = selectedNodes.first.id == base.nodeId ? base.nodePosition : extent.nodePosition;
-      final endPosition = selectedNodes.first.id == extent.nodeId ? extent.nodePosition : base.nodePosition;
+      final startPosition = selectedNodes.first.id == base.nodeId
+          ? base.nodePosition
+          : extent.nodePosition;
+      final endPosition = selectedNodes.first.id == extent.nodeId
+          ? extent.nodePosition
+          : base.nodePosition;
 
       for (int i = 0; i < selectedNodes.length; ++i) {
         final component = getComponentByNodeId(selectedNodes[i].id)!;
@@ -167,12 +184,14 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
           // This is the first node. The selection goes from
           // startPosition to the end of the node.
           final firstNodeEndPosition = component.getEndPosition();
-          componentBoundingBoxes.add(component.getRectForSelection(startPosition, firstNodeEndPosition));
+          componentBoundingBoxes.add(component.getRectForSelection(
+              startPosition, firstNodeEndPosition));
         } else if (i == selectedNodes.length - 1) {
           // This is the last node. The selection goes from
           // the beginning of the node to endPosition.
           final lastNodeStartPosition = component.getBeginningPosition();
-          componentBoundingBoxes.add(component.getRectForSelection(lastNodeStartPosition, endPosition));
+          componentBoundingBoxes.add(component.getRectForSelection(
+              lastNodeStartPosition, endPosition));
         } else {
           // This node sits between start and end. All content
           // is selected.
@@ -193,16 +212,20 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     }
 
     // Translate the bounding box so that it's positioned in document coordinate space.
-    final topComponentBox = topComponent.context.findRenderObject() as RenderBox;
-    final docOffset = topComponentBox.localToGlobal(Offset.zero, ancestor: context.findRenderObject());
+    final topComponentBox =
+        topComponent.context.findRenderObject() as RenderBox;
+    final docOffset = topComponentBox.localToGlobal(Offset.zero,
+        ancestor: context.findRenderObject());
     boundingBox = boundingBox.translate(docOffset.dx, docOffset.dy);
 
     return boundingBox;
   }
 
   @override
-  DocumentSelection? getDocumentSelectionInRegion(Offset baseOffset, Offset extentOffset) {
-    _log.log('getDocumentSelectionInRegion', 'getDocumentSelectionInRegion() - from: $baseOffset, to: $extentOffset');
+  DocumentSelection? getDocumentSelectionInRegion(
+      Offset baseOffset, Offset extentOffset) {
+    _log.log('getDocumentSelectionInRegion',
+        'getDocumentSelectionInRegion() - from: $baseOffset, to: $extentOffset');
     // Drag direction determines whether the extent offset is at the
     // top or bottom of the drag rect.
     // TODO: this condition is wrong when the user is dragging within a single line of text (#50)
@@ -219,9 +242,11 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     dynamic bottomNodeExtentPosition;
 
     for (final componentKey in _topToBottomComponentKeys) {
-      _log.log('getDocumentSelectionInRegion', ' - considering component "$componentKey"');
+      _log.log('getDocumentSelectionInRegion',
+          ' - considering component "$componentKey"');
       if (componentKey.currentState is! DocumentComponent) {
-        _log.log('getDocumentSelectionInRegion', ' - found unknown component: ${componentKey.currentState}');
+        _log.log('getDocumentSelectionInRegion',
+            ' - found unknown component: ${componentKey.currentState}');
         continue;
       }
 
@@ -230,8 +255,10 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       final componentOverlap = _getLocalOverlapWithComponent(region, component);
 
       if (componentOverlap != null) {
-        _log.log('getDocumentSelectionInRegion', ' - drag intersects: $componentKey}');
-        _log.log('getDocumentSelectionInRegion', ' - intersection: $componentOverlap');
+        _log.log('getDocumentSelectionInRegion',
+            ' - drag intersects: $componentKey}');
+        _log.log('getDocumentSelectionInRegion',
+            ' - intersection: $componentOverlap');
         final componentBaseOffset = _componentOffset(
           componentKey.currentContext!.findRenderObject() as RenderBox,
           baseOffset,
@@ -245,17 +272,25 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
           // Because we're iterating through components from top to bottom, the
           // first intersecting component that we find must be the top node of
           // the selected area.
-          topNodeId = _nodeIdsToComponentKeys.entries.firstWhere((element) => element.value == componentKey).key;
-          topNodeBasePosition = component.getPositionAtOffset(componentBaseOffset);
-          topNodeExtentPosition = component.getPositionAtOffset(componentExtentOffset);
+          topNodeId = _nodeIdsToComponentKeys.entries
+              .firstWhere((element) => element.value == componentKey)
+              .key;
+          topNodeBasePosition =
+              component.getPositionAtOffset(componentBaseOffset);
+          topNodeExtentPosition =
+              component.getPositionAtOffset(componentExtentOffset);
         }
         // We continuously update the bottom node with every additional
         // intersection that we find. This way, when the iteration ends,
         // the last bottom node that we assigned must be the actual bottom
         // node within the selected area.
-        bottomNodeId = _nodeIdsToComponentKeys.entries.firstWhere((element) => element.value == componentKey).key;
-        bottomNodeBasePosition = component.getPositionAtOffset(componentBaseOffset);
-        bottomNodeExtentPosition = component.getPositionAtOffset(componentExtentOffset);
+        bottomNodeId = _nodeIdsToComponentKeys.entries
+            .firstWhere((element) => element.value == componentKey)
+            .key;
+        bottomNodeBasePosition =
+            component.getPositionAtOffset(componentBaseOffset);
+        bottomNodeExtentPosition =
+            component.getPositionAtOffset(componentExtentOffset);
       }
     }
 
@@ -281,11 +316,13 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       return DocumentSelection(
         base: DocumentPosition(
           nodeId: isDraggingDown ? topNodeId : bottomNodeId,
-          nodePosition: isDraggingDown ? topNodeBasePosition : bottomNodeBasePosition,
+          nodePosition:
+              isDraggingDown ? topNodeBasePosition : bottomNodeBasePosition,
         ),
         extent: DocumentPosition(
           nodeId: isDraggingDown ? bottomNodeId : topNodeId,
-          nodePosition: isDraggingDown ? bottomNodeExtentPosition : topNodeExtentPosition,
+          nodePosition:
+              isDraggingDown ? bottomNodeExtentPosition : topNodeExtentPosition,
         ),
       );
     }
@@ -295,9 +332,11 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
   /// `component`'s bounding box.
   ///
   /// Returns `null` if there is no overlap.
-  Rect? _getLocalOverlapWithComponent(Rect region, DocumentComponent component) {
+  Rect? _getLocalOverlapWithComponent(
+      Rect region, DocumentComponent component) {
     final componentBox = component.context.findRenderObject() as RenderBox;
-    final contentOffset = componentBox.localToGlobal(Offset.zero, ancestor: context.findRenderObject());
+    final contentOffset = componentBox.localToGlobal(Offset.zero,
+        ancestor: context.findRenderObject());
     final componentBounds = contentOffset & componentBox.size;
 
     if (region.overlaps(componentBounds)) {
@@ -317,7 +356,8 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       return null;
     }
 
-    final componentBox = componentKey.currentContext!.findRenderObject() as RenderBox;
+    final componentBox =
+        componentKey.currentContext!.findRenderObject() as RenderBox;
     final componentOffset = _componentOffset(componentBox, documentOffset);
 
     final component = componentKey.currentState as DocumentComponent;
@@ -329,11 +369,13 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       if (componentKey.currentState is! DocumentComponent) {
         continue;
       }
-      if (componentKey.currentContext == null || componentKey.currentContext!.findRenderObject() == null) {
+      if (componentKey.currentContext == null ||
+          componentKey.currentContext!.findRenderObject() == null) {
         continue;
       }
 
-      final textBox = componentKey.currentContext!.findRenderObject() as RenderBox;
+      final textBox =
+          componentKey.currentContext!.findRenderObject() as RenderBox;
       if (_isOffsetInComponent(textBox, documentOffset)) {
         return componentKey;
       }
@@ -343,7 +385,8 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
 
   bool _isOffsetInComponent(RenderBox componentBox, Offset documentOffset) {
     final containerBox = context.findRenderObject() as RenderBox;
-    final contentOffset = componentBox.localToGlobal(Offset.zero, ancestor: containerBox);
+    final contentOffset =
+        componentBox.localToGlobal(Offset.zero, ancestor: containerBox);
     final contentRect = contentOffset & componentBox.size;
 
     return contentRect.contains(documentOffset);
@@ -351,7 +394,8 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
 
   Offset _componentOffset(RenderBox componentBox, Offset documentOffset) {
     final containerBox = context.findRenderObject() as RenderBox;
-    final contentOffset = componentBox.localToGlobal(Offset.zero, ancestor: containerBox);
+    final contentOffset =
+        componentBox.localToGlobal(Offset.zero, ancestor: containerBox);
     final contentRect = contentOffset & componentBox.size;
 
     return documentOffset - contentRect.topLeft;
@@ -361,7 +405,8 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
   DocumentComponent? getComponentByNodeId(String nodeId) {
     final key = _nodeIdsToComponentKeys[nodeId];
     if (key == null) {
-      _log.log('getComponentByNodeId', 'WARNING: could not find component for node ID: $nodeId');
+      _log.log('getComponentByNodeId',
+          'WARNING: could not find component for node ID: $nodeId');
       return null;
     }
     if (key.currentState is! DocumentComponent) {
@@ -373,13 +418,17 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
   }
 
   @override
-  Offset getDocumentOffsetFromAncestorOffset(Offset ancestorOffset, RenderObject ancestor) {
-    return (context.findRenderObject() as RenderBox).globalToLocal(ancestorOffset, ancestor: ancestor);
+  Offset getDocumentOffsetFromAncestorOffset(
+      Offset ancestorOffset, RenderObject ancestor) {
+    return (context.findRenderObject() as RenderBox)
+        .globalToLocal(ancestorOffset, ancestor: ancestor);
   }
 
   @override
-  Offset getAncestorOffsetFromDocumentOffset(Offset documentOffset, RenderObject ancestor) {
-    return (context.findRenderObject() as RenderBox).localToGlobal(documentOffset, ancestor: ancestor);
+  Offset getAncestorOffsetFromDocumentOffset(
+      Offset documentOffset, RenderObject ancestor) {
+    return (context.findRenderObject() as RenderBox)
+        .localToGlobal(documentOffset, ancestor: ancestor);
   }
 
   @override
@@ -391,7 +440,12 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final docComponent in docComponents) ...[
-          docComponent,
+          docComponent is DoneTaskItemComponent
+              ? GestureDetector(
+                  child: docComponent,
+                  onTap: () => print("taptap"),
+                )
+              : docComponent,
           SizedBox(height: widget.componentVerticalSpacing),
         ],
       ],
@@ -420,7 +474,8 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
         newComponentKeyMap: newComponentKeys,
         nodeId: docNode.id,
       );
-      _log.log('_buildDocComponents', 'Node -> Key: ${docNode.id} -> $componentKey');
+      _log.log(
+          '_buildDocComponents', 'Node -> Key: ${docNode.id} -> $componentKey');
 
       _topToBottomComponentKeys.add(componentKey);
 
@@ -442,7 +497,8 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       if (component != null) {
         docComponents.add(component);
       } else {
-        _log.log('_buildDocComponents', 'Failed to build component for node: $docNode');
+        _log.log('_buildDocComponents',
+            'Failed to build component for node: $docNode');
       }
     }
 
@@ -450,7 +506,8 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       ..clear()
       ..addAll(newComponentKeys);
 
-    _log.log('_buildDocComponents', ' - keys -> IDs after building all components:');
+    _log.log(
+        '_buildDocComponents', ' - keys -> IDs after building all components:');
     _nodeIdsToComponentKeys.forEach((key, value) {
       _log.log('_buildDocComponents', '   - $key: $value');
     });
@@ -485,8 +542,10 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
     final documentSelection = widget.documentSelection!;
 
     _log.log('_computeNodeSelection', '_computeNodeSelection(): $nodeId');
-    _log.log('_computeNodeSelection', ' - base: ${documentSelection.base.nodeId}');
-    _log.log('_computeNodeSelection', ' - extent: ${documentSelection.extent.nodeId}');
+    _log.log(
+        '_computeNodeSelection', ' - base: ${documentSelection.base.nodeId}');
+    _log.log('_computeNodeSelection',
+        ' - extent: ${documentSelection.extent.nodeId}');
 
     final node = widget.document.getNodeById(nodeId);
     if (node == null) {
@@ -497,14 +556,16 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       _log.log('_computeNodeSelection', ' - selection is within 1 node.');
       if (documentSelection.base.nodeId != nodeId) {
         // Only 1 node is selected and its not the node we're interested in. Return.
-        _log.log('_computeNodeSelection', ' - this node is not selected. Returning null.');
+        _log.log('_computeNodeSelection',
+            ' - this node is not selected. Returning null.');
         return null;
       }
 
       _log.log('_computeNodeSelection', ' - this node has the selection');
       final baseNodePosition = documentSelection.base.nodePosition;
       final extentNodePosition = documentSelection.extent.nodePosition;
-      final nodeSelection = node.computeSelection(base: baseNodePosition, extent: extentNodePosition);
+      final nodeSelection = node.computeSelection(
+          base: baseNodePosition, extent: extentNodePosition);
       _log.log('_computeNodeSelection', ' - node selection: $nodeSelection');
 
       return DocumentNodeSelection(
@@ -515,19 +576,24 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
       );
     } else {
       // Log all the selected nodes.
-      _log.log('_computeNodeSelection', ' - selection contains multiple nodes:');
+      _log.log(
+          '_computeNodeSelection', ' - selection contains multiple nodes:');
       for (final node in selectedNodes) {
         _log.log('_computeNodeSelection', '   - ${node.id}');
       }
 
-      if (selectedNodes.firstWhereOrNull((selectedNode) => selectedNode.id == nodeId) == null) {
+      if (selectedNodes
+              .firstWhereOrNull((selectedNode) => selectedNode.id == nodeId) ==
+          null) {
         // The document selection does not contain the node we're interested in. Return.
-        _log.log('_computeNodeSelection', ' - this node is not in the selection');
+        _log.log(
+            '_computeNodeSelection', ' - this node is not in the selection');
         return null;
       }
 
       if (selectedNodes.first.id == nodeId) {
-        _log.log('_computeNodeSelection', ' - this is the first node in the selection');
+        _log.log('_computeNodeSelection',
+            ' - this is the first node in the selection');
         // Multiple nodes are selected and the node that we're interested in
         // is the top node in that selection. Therefore, this node is
         // selected from a position down to its bottom.
@@ -535,14 +601,18 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
         return DocumentNodeSelection(
           nodeId: nodeId,
           nodeSelection: node.computeSelection(
-            base: isBase ? documentSelection.base.nodePosition : node.endPosition,
-            extent: isBase ? node.endPosition : documentSelection.extent.nodePosition,
+            base:
+                isBase ? documentSelection.base.nodePosition : node.endPosition,
+            extent: isBase
+                ? node.endPosition
+                : documentSelection.extent.nodePosition,
           ),
           isBase: isBase,
           isExtent: !isBase,
         );
       } else if (selectedNodes.last.id == nodeId) {
-        _log.log('_computeNodeSelection', ' - this is the last node in the selection');
+        _log.log('_computeNodeSelection',
+            ' - this is the last node in the selection');
         // Multiple nodes are selected and the node that we're interested in
         // is the bottom node in that selection. Therefore, this node is
         // selected from the beginning down to some position.
@@ -551,13 +621,16 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout> implement
           nodeId: nodeId,
           nodeSelection: node.computeSelection(
             base: isBase ? node.beginningPosition : node.beginningPosition,
-            extent: isBase ? documentSelection.base.nodePosition : documentSelection.extent.nodePosition,
+            extent: isBase
+                ? documentSelection.base.nodePosition
+                : documentSelection.extent.nodePosition,
           ),
           isBase: isBase,
           isExtent: !isBase,
         );
       } else {
-        _log.log('_computeNodeSelection', ' - this node is fully selected within the selection');
+        _log.log('_computeNodeSelection',
+            ' - this node is fully selected within the selection');
         // Multiple nodes are selected and this node is neither the top
         // or the bottom node, therefore this entire node is selected.
         return DocumentNodeSelection(
