@@ -447,7 +447,10 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout>
                     GestureDetector(
                         onTap: () => print("test"),
                         child: Container(
-                            width: 10, height: 10, color: Colors.red)),
+                            margin: const EdgeInsets.only(top: 2.0),
+                            width: 10,
+                            height: 10,
+                            color: Colors.red)),
                     docComponent
                   ],
                 )
