@@ -1,11 +1,9 @@
 import 'package:collection/collection.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
-import 'package:super_editor/src/default_editor/task_items.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 final _log = Logger(scope: 'DocumentLayout');
@@ -441,20 +439,7 @@ class _DefaultDocumentLayoutState extends State<DefaultDocumentLayout>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final docComponent in docComponents) ...[
-          docComponent is DoneTaskItemComponent
-              ? Stack(
-                  children: [
-                    GestureDetector(
-                        onTap: () => print("test"),
-                        child: Container(
-                            margin: const EdgeInsets.only(top: 2.0),
-                            width: 10,
-                            height: 10,
-                            color: Colors.red)),
-                    docComponent
-                  ],
-                )
-              : docComponent,
+          docComponent,
           SizedBox(height: widget.componentVerticalSpacing),
         ],
       ],
